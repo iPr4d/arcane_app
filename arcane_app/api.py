@@ -1,16 +1,34 @@
-## import required packages
+## import required flask packages to build app and api
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, g, abort
 from flask_sqlalchemy import SQLAlchemy
+
+## import packages to manage authentication
+
+from flask_httpauth import HTTPBasicAuth
+auth = HTTPBasicAuth()
+
+## function to verify user password
+
+@auth.verify_password
+def verify_password(username, password):
+    user = User.query.filter_by(username = username).first()
+    if not user or not user.verify_password(password):
+        return False
+    g.user = user
+    return True
+
+## Other importations
+
 import os
 import sys
 import datetime
-
 basedir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(basedir)
-
 from models import *
 
+
+## defining app
 
 app = Flask(__name__)
 
@@ -18,12 +36,15 @@ app = Flask(__name__)
 ## define app configuration
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'databases.sqlite')
+app.config['TESTING'] = False
+
+## defining database
 
 db = SQLAlchemy(app)
 
 
 
-## Create new user
+## endpoint 1 : Create new user
 
 @app.route("/user", methods=["POST"])
 def add_user():
@@ -32,15 +53,22 @@ def add_user():
     birth_date=request.json['birth_date']
     username = request.json['username']
     password = request.json['password']
+    if username is None or password is None:
+        abort(400) # missing arguments
+    if User.query.filter_by(username = username).first() is not None:
+        abort(400) # existing user
+
     birth_date2=datetime.date(int(birth_date[0:4]),int(birth_date[5:7]),int(birth_date[8:10]))
+
 
     new_user=create_new_user(name,first_name,birth_date2,username,password)
 
     return user_schema.jsonify(new_user)
 
-## Create new good 
+## endpoint 2 : Create new good -> authentication needed to know who's the owner
 
 @app.route("/good", methods=["POST"])
+@auth.login_required
 def add_good():
     name = request.json['name']
     description=request.json['description']
@@ -48,17 +76,26 @@ def add_good():
     city = request.json['city']
     nb_rooms= request.json['nb_rooms']
     rooms_charac = request.json['rooms_charac']
-    owner_id=1 ## à modifier
+    owner_id=g.user.get_id() ## the owner is the authenticated user
 
     new_good=create_new_good(name,description,type,city,int(nb_rooms),rooms_charac, owner_id)
 
     return good_schema.jsonify(new_good)
 
-## Modify existing good
+## endpoint 3 : Modify existing good -> authentication needed
 
 @app.route("/good/<id>", methods=["PUT"])
+@auth.login_required
 def modif_good(id):
+
+## testing if the authenticated user is the selected good owner
+
     selected_good=Good.query.get(id)
+    if g.user.get_id()!=selected_good.owner_id:
+        abort(400, " This authenticated user cannot modify this good : he's not the owner ") ## not the owner
+
+## if yes, we allow the user to modify his own good infos
+
     name = request.json['name']
     description=request.json['description']
     type = request.json['type']
@@ -67,11 +104,12 @@ def modif_good(id):
     rooms_charac = request.json['rooms_charac']
 
     selected_good.modify_good(name,description,type,city,int(nb_rooms),rooms_charac)
+
     modified_good=Good.query.get(id)
 
     return good_schema.jsonify(modified_good)
 
-## Modify existing user
+## endpoint 4 : Modify existing user : no need authentication
 
 @app.route("/user/<id>", methods=["PUT"])
 def user_update(id):
@@ -81,22 +119,19 @@ def user_update(id):
     birth_date=request.json['birth_date']
     birth_date2=datetime.date(int(birth_date[0:4]),int(birth_date[5:7]),int(birth_date[8:10]))
     username = request.json['username']
-    password = request.json['password']
+    password_hash = request.json['password_hash']
 
-    user.modify_infos(name,first_name,birth_date2,username,password)
+    user.modify_infos(name,first_name,birth_date2,username,password_hash)
+
     modified_user=User.query.get(id)
 
     return user_schema.jsonify(modified_user)
 
-## Get all goods from a city
+## endpoint 5 : Get all goods from a city
 
 @app.route("/goods/<city>", methods=["GET"])
 def good_detail(city):
     selected_goods = Good.query.filter(Good.city == city).all()
     result = goods_schema.dump(selected_goods)
     return goods_schema.jsonify(result.data)
-
-
-
-
 

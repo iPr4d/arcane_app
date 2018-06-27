@@ -6,6 +6,9 @@ import datetime
 import timestring
 import json
 
+from passlib.apps import custom_app_context as pwd_context ## package for password hashing
+
+
 from api import app
 
 ## Link Flask/SQL
@@ -52,22 +55,32 @@ class User(db.Model):
     name = db.Column(db.String(50), nullable=False)
     first_name = db.Column(db.String(50), nullable=False)
     birth_date = db.Column(db.Date, nullable=False)
-    username=db.Column(db.String(80), unique=True)
-    password=db.Column(db.String(80), unique=False)
+    username=db.Column(db.String(80), index=True)
+    password_hash=db.Column(db.String(80))
+
+    def hash_password(self, password):
+        self.password_hash = pwd_context.encrypt(password)
+
+    def verify_password(self, password):
+        return pwd_context.verify(password, self.password_hash)
+
+    def get_id(self):
+        return self.id
 
 ##  modify selected user infos method
 
     def modify_infos(self,new_user_name,new_user_fname,new_user_bd,new_user_username,new_user_password):
         id_not_modified=self.id
         db.session.delete(self)
-        new_user=User(id=id_not_modified,name=new_user_name,first_name=new_user_fname,birth_date=new_user_bd,username=new_user_username,password=new_user_password)
+        new_user=User(id=id_not_modified,name=new_user_name,first_name=new_user_fname,birth_date=new_user_bd,username=new_user_username,password_hash=new_user_password)
         db.session.add(new_user)
         db.session.commit()
 
 ## independant function to create new User object
 
 def create_new_user(new_user_name,new_user_fname,new_user_bd,new_user_username,new_user_password):
-    new_user=User(name=new_user_name,first_name=new_user_fname,birth_date=new_user_bd, username=new_user_username,password=new_user_password)
+    new_user=User(name=new_user_name,first_name=new_user_fname,birth_date=new_user_bd, username=new_user_username,password_hash=new_user_password)
+    new_user.hash_password(new_user_password)
     db.session.add(new_user)
     db.session.commit()
     return new_user
@@ -77,7 +90,7 @@ def create_new_user(new_user_name,new_user_fname,new_user_bd,new_user_username,n
 class UserSchema(ma.Schema):
     class Meta:
         # Fields to expose
-        fields = ('name','first_name','birth_date','username', 'password')
+        fields = ('name','first_name','birth_date','username', 'password_hash')
 
 
 user_schema = UserSchema()
@@ -102,6 +115,7 @@ db.create_all()
 import logging as lg
 
 def init_db():
+    create_new_user('Pradier','Antoine',datetime.date(1995,4,11),'antprad','pradier84')
     db.session.add(Good(name='Appartement T2 à louer coeur de Paris',
                        description='Très bel appartemment situé quartier Saint_paul....', type='Appartement',
                        city='Paris', nb_rooms=2, rooms_charac='Chambre de 16m2, cuisine équipée...', owner_id=1))
