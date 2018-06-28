@@ -35,13 +35,13 @@ app = Flask(__name__)
 
 ## define app configuration
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'databases.sqlite')
-app.config['TESTING'] = False
+pardir = os.path.abspath(os.path.pardir)
+
+app.config.from_pyfile(os.path.join(pardir, 'arcane/config.py'))
 
 ## defining database
 
 db = SQLAlchemy(app)
-
 
 
 ## endpoint 1 : Create new user
@@ -109,19 +109,21 @@ def modif_good(id):
 
     return good_schema.jsonify(modified_good)
 
-## endpoint 4 : Modify existing user : no need authentication
+## endpoint 4 : Modify existing user : need authentication
 
 @app.route("/user/<id>", methods=["PUT"])
+@auth.login_required
 def user_update(id):
+    if int(g.user.get_id())!=int(id):
+        abort(400, "This authenticated user cannot modify these informations : not his personal account") 
     user = User.query.get(id)
     name = request.json['name']
     first_name=request.json['first_name']
     birth_date=request.json['birth_date']
     birth_date2=datetime.date(int(birth_date[0:4]),int(birth_date[5:7]),int(birth_date[8:10]))
-    username = request.json['username']
-    password_hash = request.json['password_hash']
+    password = request.json['password']
 
-    user.modify_infos(name,first_name,birth_date2,username,password_hash)
+    user.modify_infos(name,first_name,birth_date2,password)
 
     modified_user=User.query.get(id)
 

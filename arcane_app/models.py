@@ -69,10 +69,12 @@ class User(db.Model):
 
 ##  modify selected user infos method
 
-    def modify_infos(self,new_user_name,new_user_fname,new_user_bd,new_user_username,new_user_password):
+    def modify_infos(self,new_user_name,new_user_fname,new_user_bd,new_user_password):  ## username cannot be modified
         id_not_modified=self.id
+        username=self.username
         db.session.delete(self)
-        new_user=User(id=id_not_modified,name=new_user_name,first_name=new_user_fname,birth_date=new_user_bd,username=new_user_username,password_hash=new_user_password)
+        new_user=User(id=id_not_modified,name=new_user_name,first_name=new_user_fname,birth_date=new_user_bd,username=username,password_hash=new_user_password)
+        new_user.hash_password(new_user_password)
         db.session.add(new_user)
         db.session.commit()
 
@@ -107,19 +109,28 @@ good_schema = GoodSchema()
 goods_schema = GoodSchema(many=True)
 
 
-db.create_all()
+
 
 ## Good database initialization
-
 
 import logging as lg
 
 def init_db():
-    create_new_user('Pradier','Antoine',datetime.date(1995,4,11),'antprad','pradier84')
-    db.session.add(Good(name='Appartement T2 à louer coeur de Paris',
-                       description='Très bel appartemment situé quartier Saint_paul....', type='Appartement',
-                       city='Paris', nb_rooms=2, rooms_charac='Chambre de 16m2, cuisine équipée...', owner_id=1))
+    db.drop_all()
+    db.create_all()
+    create_new_user("Blanc","Martin",datetime.date(1991,4,26),"bmartin","motdepasse1")
+    create_new_user("Marchand","Alain",datetime.date(1964,7,12),"alain_mar","motdepasse2")
+    create_new_user("Alary","Francoise",datetime.date(1972,1,23),"f_alary","motdepasse3")
+    db.session.add(Good(name="Appartement T2 à louer coeur de Paris",
+                       description="Très bel appartemment situé quartier Saint Paul...", type="T2",
+                       city="Paris", nb_rooms=2, rooms_charac="Chambre de 11m2, cuisine équipée...", owner_id=1))
+    db.session.add(Good(name="Maison à vendre banlieue parisienne",
+                       description="Maison de 120m2 avec terrain de 400m2 situé en banlieue ouest parisienne", type="Maison",
+                       city="Rueil-Malmaison", nb_rooms=6, rooms_charac="3 chambres, salon avec table à manger, cuisine équipée...", owner_id=2))
+    db.session.add(Good(name="Maison à vendre banlieue parisienne",
+                        description="Studio 14ème arrondissement de Paris proche métro et commodités", type="Studio T1",
+                        city="Paris", nb_rooms=1, rooms_charac="1 pièce avec cuisine entièrement équipée...", owner_id=3))
     db.session.commit()
-    lg.warning('Database initialized!')
+    lg.warning("Database initialized!")
 
 
