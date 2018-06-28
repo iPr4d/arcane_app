@@ -122,14 +122,14 @@ def init_db():
     create_new_user("Marchand","Alain",datetime.date(1964,7,12),"alain_mar","motdepasse2")
     create_new_user("Alary","Francoise",datetime.date(1972,1,23),"f_alary","motdepasse3")
     db.session.add(Good(name="Appartement T2 à louer coeur de Paris",
-                       description="Très bel appartemment situé quartier Saint Paul...", type="T2",
-                       city="Paris", nb_rooms=2, rooms_charac="Chambre de 11m2, cuisine équipée...", owner_id=1))
-    db.session.add(Good(name="Maison à vendre banlieue parisienne",
-                       description="Maison de 120m2 avec terrain de 400m2 situé en banlieue ouest parisienne", type="Maison",
-                       city="Rueil-Malmaison", nb_rooms=6, rooms_charac="3 chambres, salon avec table à manger, cuisine équipée...", owner_id=2))
-    db.session.add(Good(name="Maison à vendre banlieue parisienne",
-                        description="Studio 14ème arrondissement de Paris proche métro et commodités", type="Studio T1",
-                        city="Paris", nb_rooms=1, rooms_charac="1 pièce avec cuisine entièrement équipée...", owner_id=3))
+                       description="Tres bel appartemment situéequartier Saint Paul...", type="T2",
+                       city="Paris", nb_rooms=2, rooms_charac="Chambre de 11m2, cuisine equipee...", owner_id=1))
+    db.session.add(Good(name="Maison a vendre banlieue parisienne",
+                       description="Maison de 120m2 avec terrain de 400m2 situee en banlieue ouest parisienne", type="Maison",
+                       city="Rueil-Malmaison", nb_rooms=6, rooms_charac="3 chambres, salon avec table a manger, cuisine equipee...", owner_id=2))
+    db.session.add(Good(name="Studio parisien",
+                        description="Studio 14eme arrondissement de Paris proche metro et commodites", type="Studio T1",
+                        city="Paris", nb_rooms=1, rooms_charac="1 piece avec cuisine entierement equipee...", owner_id=3))
     db.session.commit()
     lg.warning("Database initialized!")
 

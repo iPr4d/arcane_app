@@ -35,9 +35,11 @@ app = Flask(__name__)
 
 ## define app configuration
 
-pardir = os.path.abspath(os.path.pardir)
+n=len(basedir)
 
-app.config.from_pyfile(os.path.join(pardir, 'arcane/config.py'))
+cdir=basedir[:(n-10)]
+
+app.config.from_pyfile(os.path.join(cdir, 'config.py'))
 
 ## defining database
 
