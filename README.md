@@ -10,7 +10,7 @@ Pour faire tourner l'API en local, veuillez suivre les instructions suivantes :
 
 ### Exécution du script
 
-- exécuter le script `api.py` dans une fenêtre de Terminal
+- exécuter le script `run.py` dans une fenêtre de Terminal
 
 - ouvrir une nouvelle fenêtre de Terminal
 
